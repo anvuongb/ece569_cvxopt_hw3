@@ -80,7 +80,7 @@ plt.xlim(-8, 8)
 plt.ylim(-8, 8)
 # plt.show()
 plt.tight_layout()
-fig.savefig("./prob1_figs/plot_1a_training_data.png")
+fig.savefig("./figures/plot_1a_training_data.png")
 
 # TESTING PLOT
 fig = plt.figure(figsize=(10,10))
@@ -106,6 +106,6 @@ plt.xlim(-8, 8 )
 plt.ylim(-8, 8 )
 # plt.show()
 plt.tight_layout()
-fig.savefig("./prob1_figs/plot_1a_testing_data.png")
+fig.savefig("./figures/plot_1a_testing_data.png")
 
 
