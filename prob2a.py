@@ -4,6 +4,8 @@ import scipy.io
 import matplotlib
 matplotlib.use('agg') # fix pyplot hangs in wsl2 https://github.com/matplotlib/matplotlib/issues/22385
 import matplotlib.pyplot as plt
+import time
+import pickle
 
 # Helpers for calculate GD and projection
 def calc_gradient_descent(u, v, A, B, iteration=None, alpha=0.1):
@@ -29,7 +31,7 @@ def calc_projection_optimization(x, n=100, d=0.02):
                  [cp.matmul(ones, y)==1,
                   y>=0,
                   d*ones.T >= y])
-    prob.solve(solver="MOSEK", verbose=False)
+    prob.solve(verbose=False)
     return y.value, prob.value
 
 ###################
@@ -56,6 +58,8 @@ v_prev = v_0
 beta = 0.5
 alpha = 0.1
 prob_vals = []
+time_list = []
+uv_list = []
 
 min_d = 0.01 # stopping criteria
 max_it = 100 # max number of iters
@@ -65,6 +69,7 @@ min_it = 20 # min number of iters
 prob_vals.append(np.square(np.linalg.norm(np.matmul(A, u_prev)-np.matmul(B, v_prev))))
 # projected gradient loop
 for i in range(max_it): 
+    start = time.time()
     u_curr_grad = calc_gradient_descent(u_prev, v_prev, A, B, alpha=alpha)
     # u_curr, _ = calc_projection_optimization(u_curr_grad, d=1)
     u_curr, _ = cal_projection_prob_simplex_simple(u_curr_grad)
@@ -78,6 +83,11 @@ for i in range(max_it):
     # line search
     u_curr = beta*u_curr + (1-beta)*u_prev
     v_curr = beta*v_curr + (1-beta)*v_prev
+
+    end = time.time()
+    # save time and current opt vectors
+    time_list.append(end-start)
+    uv_list.append([u_curr, v_curr])
     
     prob_vals.append(np.square(np.linalg.norm(np.matmul(A, u_curr)-np.matmul(B, v_curr))))
     if i >= min_it: 
@@ -88,6 +98,14 @@ for i in range(max_it):
     
     u_prev = u_curr
     v_prev = v_curr
+
+data_dict = {"time_list": time_list,
+             "uv_list":uv_list,
+             "prob_vals":prob_vals
+            }
+
+with open("data_plot/q2a_c_hull_data.pickle", "wb") as f:
+    pickle.dump(data_dict, f)
     
 u_opt = u_curr
 v_opt = v_curr
@@ -165,9 +183,9 @@ fig.savefig("./figures/plot_2a_c_hull_testing_data.png")
 #######################
 
 
-###################
+###########################
 ### REDUCED CONVEX HULL ###
-###################
+###########################
 print("\nWorking on Reduced Convex Hull")
 data_train = scipy.io.loadmat("overlap_case/train_overlap.mat")
 data_test = scipy.io.loadmat("overlap_case/test_overlap.mat")
@@ -189,6 +207,8 @@ v_prev = v_0
 beta = 0.5
 alpha = 0.1
 prob_vals = []
+uv_list = []
+time_list = []
 
 min_d = 0.01 # stopping criteria
 max_it = 100 # max number of iters
@@ -198,6 +218,7 @@ min_it = 20 # min number of iters
 prob_vals.append(np.square(np.linalg.norm(np.matmul(A, u_prev)-np.matmul(B, v_prev))))
 # projected gradient loop
 for i in range(max_it): 
+    start = time.time()
     u_curr_grad = calc_gradient_descent(u_prev, v_prev, A, B, alpha=alpha)
     u_curr, _ = calc_projection_optimization(u_curr_grad, d=0.02)
     # u_curr, _ = cal_projection_prob_simplex_simple(u_curr_grad)
@@ -211,6 +232,10 @@ for i in range(max_it):
     # line search
     u_curr = beta*u_curr + (1-beta)*u_prev
     v_curr = beta*v_curr + (1-beta)*v_prev
+    end = time.time()
+    # save time and current opt vectors
+    time_list.append(end-start)
+    uv_list.append([u_curr, v_curr])
     
     prob_vals.append(np.square(np.linalg.norm(np.matmul(A, u_curr)-np.matmul(B, v_curr))))
     if i >= min_it: 
@@ -221,7 +246,15 @@ for i in range(max_it):
     
     u_prev = u_curr
     v_prev = v_curr
-    
+
+data_dict = {"time_list": time_list,
+             "uv_list":uv_list,
+             "prob_vals":prob_vals
+            }
+
+with open("data_plot/q2a_reduced_c_hull_data.pickle", "wb") as f:
+    pickle.dump(data_dict, f)
+
 u_opt = u_curr
 v_opt = v_curr
 
@@ -293,6 +326,6 @@ plt.ylim(-8, 8 )
 # plt.show()
 plt.tight_layout()
 fig.savefig("./figures/plot_2a_reduced_c_hull_testing_data.png")
-#######################
-### END CONVEX HULL ###
-#######################
+###############################
+### END REDUCED CONVEX HULL ###
+###############################
